@@ -1,0 +1,150 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>TicTac Arena</title>
+<style>
+:root{--bg:#090D18;--card:rgba(255,255,255,.06);--bd:rgba(255,255,255,.12);--tx:#fff;--mu:#9aa4bf;--p:#7957FF;--b:#36B9FF;--c:#00E5FF}
+[data-t=light]{--bg:#eef1fb;--card:rgba(255,255,255,.8);--bd:rgba(0,0,0,.1);--tx:#10152a;--mu:#5b6482}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(900px 500px at 20% -10%,#7957ff40,transparent),radial-gradient(700px 500px at 100% 0,#36b9ff30,transparent),var(--bg);color:var(--tx);font:16px system-ui,sans-serif}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 20px}
+.logo{font-weight:800;font-size:20px;background:linear-gradient(90deg,var(--b),var(--p));-webkit-background-clip:text;color:transparent}
+.dot{width:10px;height:10px;border-radius:50%;background:#888;display:inline-block;margin-right:6px}.dot.on{background:#10d98a}
+main{max-width:760px;margin:0 auto;padding:10px 16px 40px;text-align:center}
+.screen{display:none;animation:in .35s}.screen.on{display:block}@keyframes in{from{opacity:0;transform:translateY(10px)}}
+h1{font-size:clamp(34px,8vw,56px);margin:.3em 0}.sub{color:var(--mu);margin:0 auto 24px;max-width:520px}
+.cards{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.card,.panel{background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:20px;backdrop-filter:blur(12px)}
+.card{cursor:pointer;transition:.2s;text-align:center}.card:hover,.card:focus-visible{transform:translateY(-4px);box-shadow:0 0 28px #7957ff55;outline:0}
+.card .ic{font-size:44px}.card p{color:var(--mu);font-size:14px}
+button.btn{background:linear-gradient(90deg,var(--p),var(--b));color:#fff;border:0;border-radius:14px;padding:12px 22px;font-size:16px;font-weight:700;cursor:pointer;margin:4px;transition:.15s}
+button.btn:hover{transform:scale(1.04)}button.btn:active{transform:scale(.96)}button.btn.g{background:var(--card);border:1px solid var(--bd);color:var(--tx)}
+input,select{width:100%;padding:12px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:16px;margin:6px 0}
+.avs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0}.avs button{font-size:28px;background:var(--card);border:2px solid transparent;border-radius:14px;padding:6px 10px;cursor:pointer}.avs button.sel{border-color:var(--c);box-shadow:0 0 14px #00e5ff66}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.score{display:flex;justify-content:space-between;gap:8px;margin:10px 0}.pl{flex:1;padding:10px;border-radius:16px;background:var(--card);border:2px solid var(--bd)}.pl.act{border-color:var(--c);box-shadow:0 0 18px #00e5ff55}.pl b{display:block;font-size:24px}
+#board{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:min(92vw,420px);margin:18px auto}
+.cell{aspect-ratio:1;border-radius:18px;border:1px solid var(--bd);background:var(--card);font-size:clamp(40px,14vw,72px);font-weight:800;cursor:pointer;color:var(--tx)}
+.cell:focus-visible{outline:2px solid var(--c)}.cell.X{color:var(--b);text-shadow:0 0 16px var(--b)}.cell.O{color:var(--p);text-shadow:0 0 16px var(--p)}
+.cell.pop{animation:pop .25s}@keyframes pop{from{transform:scale(.3)}}.cell.win{background:#10d98a33;border-color:#10d98a;box-shadow:0 0 22px #10d98a}
+.code{font-size:clamp(34px,10vw,56px);font-weight:900;letter-spacing:.08em;color:var(--c);text-shadow:0 0 20px #00e5ff77}
+.spin{width:36px;height:36px;border:4px solid var(--bd);border-top-color:var(--c);border-radius:50%;animation:sp 1s linear infinite;margin:14px auto}@keyframes sp{to{transform:rotate(360deg)}}
+#modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:9}#modal.on{display:flex}
+#modal .panel{background:var(--bg);animation:in .3s;max-width:360px;width:90%}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1c2340;color:#fff;padding:12px 18px;border-radius:12px;z-index:20}
+.cf{position:fixed;top:-20px;font-size:22px;animation:fall 2.4s linear forwards;z-index:10}@keyframes fall{to{transform:translateY(105vh) rotate(540deg)}}
+.err{color:#ff7b8a;min-height:22px}table{width:100%;border-collapse:collapse;margin-top:8px}td,th{padding:6px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style></head><body>
+<header><span class="logo">⚡ TicTac Arena</span><span><span id="conn" hidden><span class="dot"></span><small id="connt"></small></span>
+<button class="btn g" id="snd" aria-label="Toggle sound">🔊</button><button class="btn g" id="thm" aria-label="Toggle theme">🌙</button></span></header>
+<main>
+<section id="home" class="screen on"><h1>Every Move Counts.</h1>
+<p class="sub">Challenge the AI, play with friends beside you, or compete online. Your next victory is just one move away.</p>
+<div class="cards">
+<div class="card" tabindex="0" data-m="ai"><div class="ic">🤖</div><h3>Play with AI</h3><p>Challenge an intelligent AI opponent.</p><button class="btn">Play Against Bot</button></div>
+<div class="card" tabindex="0" data-m="local"><div class="ic">👥</div><h3>Play Locally</h3><p>Play with a friend on the same device.</p><button class="btn">Local Multiplayer</button></div>
+<div class="card" tabindex="0" data-m="online"><div class="ic">🌍</div><h3>Play Online</h3><p>Create a private room or join your friend's.</p><button class="btn">Play Online</button></div></div>
+<div class="panel" style="margin-top:18px"><b>Your lifetime stats (this device)</b><div id="life" class="sub" style="margin:6px auto 0"></div></div></section>
+
+<section id="setup" class="screen"><div class="panel"><h2 id="stt"></h2>
+<input id="n1" maxlength="14" placeholder="Your name"><div class="avs" id="av1"></div>
+<div id="p2box" hidden><input id="n2" maxlength="14" placeholder="Player 2 name"><div class="avs" id="av2"></div></div>
+<select id="diff" hidden><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option><option value="impossible">Impossible</option></select>
+<div id="onl" hidden><div class="row"><button class="btn" id="mk">Create Room</button><button class="btn g" id="jn">Join Room</button></div>
+<div id="jbox" hidden><input id="jc" placeholder="Room code e.g. RAZA-4821" autocapitalize="characters"><button class="btn" id="jgo">Join</button></div></div>
+<div class="err" id="err" role="alert"></div>
+<div class="row"><button class="btn" id="go">Start</button><button class="btn g" data-home>Back</button></div></div></section>
+
+<section id="wait" class="screen"><div class="panel"><p class="sub">Share this code with your friend</p><div class="code" id="wc"></div>
+<div class="spin"></div><p>Waiting for your friend to join...</p>
+<div class="row"><button class="btn" id="cp">Copy Code</button><button class="btn" id="sh">Share Room</button><button class="btn g" id="cx">Cancel Room</button></div></div></section>
+
+<section id="game" class="screen"><div class="score" id="sc"></div><div id="tn" aria-live="polite"></div>
+<div id="board" role="grid" aria-label="Tic-tac-toe board"></div><small id="rc"></small>
+<div class="row"><button class="btn g" id="rs">Restart</button><button class="btn g" id="ex">Exit</button></div></section>
+</main>
+<div id="modal"><div class="panel"><h2 id="mt"></h2><p id="mp" class="sub"></p><div class="row" id="mb"></div></div></div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const $=s=>document.querySelector(s),AV=['🦊','🐼','🐯','🤖','👾','🐙','🦄','🐲'];
+const L=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch{}};
+let mode,av1=+ls('av')||0,av2=1,snd=ls('snd')!=='0',G=null,sock=null,O=null,sym=null,prevBoard=null;
+const tok=ls('tok')||(()=>{const t=crypto.randomUUID();ls('tok',t);return t})();
+const show=id=>{document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('on',e.id===id));$('#modal').classList.remove('on')};
+const toast=t=>{const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.append(d);setTimeout(()=>d.remove(),2600)};
+function beep(f,d=.08){if(!snd)return;try{const a=beep.a||(beep.a=new AudioContext()),o=a.createOscillator(),g=a.createGain();o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+d)}catch{}}
+function confetti(){for(let i=0;i<40;i++){const d=document.createElement('div');d.className='cf';d.textContent='🎉✨🎊'[i%3];d.style.left=Math.random()*100+'vw';d.style.animationDelay=Math.random()*.8+'s';document.body.append(d);setTimeout(()=>d.remove(),3400)}}
+// theme / sound
+$('#thm').onclick=()=>{const l=document.documentElement.dataset.t!=='light';document.documentElement.dataset.t=l?'light':'';ls('theme',l?'light':'')};
+if(ls('theme'))document.documentElement.dataset.t='light';
+$('#snd').textContent=snd?'🔊':'🔇';$('#snd').onclick=()=>{snd=!snd;ls('snd',snd?'1':'0');$('#snd').textContent=snd?'🔊':'🔇'};
+// stats (device-local)
+const st=()=>JSON.parse(ls('stats')||'{"w":0,"l":0,"d":0,"streak":0,"best":0}');
+function rec(r){const s=st();if(r==='w'){s.w++;s.streak++;s.best=Math.max(s.best,s.streak)}else{s.streak=0;s[r]++}ls('stats',JSON.stringify(s));life()}
+function life(){const s=st(),t=s.w+s.l+s.d;$('#life').textContent=`${t} games · ${s.w}W ${s.l}L ${s.d}D · ${t?Math.round(100*s.w/t):0}% wins · streak ${s.streak} (best ${s.best})`}life();
+// avatars
+function avs(el,get,set){el.innerHTML='';AV.forEach((a,i)=>{const b=document.createElement('button');b.textContent=a;b.setAttribute('aria-label','Avatar '+a);b.className=get()===i?'sel':'';b.onclick=()=>{set(i);avs(el,get,set)};el.append(b)})}
+document.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>show('home'));
+document.querySelectorAll('.card').forEach(c=>{const go=()=>openSetup(c.dataset.m);c.onclick=go;c.onkeydown=e=>{if(e.key==='Enter')go()}});
+function openSetup(m){mode=m;$('#err').textContent='';$('#n1').value=ls('name')||'';
+ $('#stt').textContent={ai:'Play vs AI',local:'Local Multiplayer',online:'Play Online'}[m];
+ $('#p2box').hidden=m!=='local';$('#diff').hidden=m!=='ai';$('#onl').hidden=m!=='online';$('#go').hidden=m==='online';$('#jbox').hidden=true;
+ avs($('#av1'),()=>av1,i=>av1=i);avs($('#av2'),()=>av2,i=>av2=i);show('setup')}
+const nm=()=>($('#n1').value.trim()||'Player 1').slice(0,14);
+// board drawing
+function draw(board,line,onclick,enabled){const b=$('#board');b.innerHTML='';board.forEach((v,i)=>{const c=document.createElement('button');c.className='cell '+(v||'')+(line&&line.includes(i)?' win':'');
+ c.textContent=v||'';c.setAttribute('aria-label',`Cell ${i+1}${v?' '+v:' empty'}`);c.disabled=!!v||!enabled;
+ if(v&&prevBoard&&!prevBoard[i])c.classList.add('pop');c.onclick=()=>onclick(i);b.append(c)});prevBoard=board.slice()}
+function sb(p){$('#sc').innerHTML=p.map(x=>`<div class="pl ${x.act?'act':''}"><span style="font-size:28px">${x.av}</span> ${x.name} (${x.s})<b>${x.w}</b><small>${x.d} draws</small></div>`).join('')}
+function modal(t,p,btns){$('#mt').textContent=t;$('#mp').textContent=p;$('#mb').innerHTML='';btns.forEach(([l,f,g])=>{const b=document.createElement('button');b.className='btn'+(g?' g':'');b.textContent=l;b.onclick=f;$('#mb').append(b)});$('#modal').classList.add('on')}
+// ---- local & AI engine
+const res=b=>{for(const l of L)if(b[l[0]]&&b[l[0]]===b[l[1]]&&b[l[0]]===b[l[2]])return{w:b[l[0]],line:l};return b.every(Boolean)?{w:'draw'}:null};
+function mm(b,t,me){const r=res(b);if(r)return r.w==='draw'?0:r.w===me?10:-10;let best=t===me?-99:99;
+ for(let i=0;i<9;i++)if(!b[i]){b[i]=t;const v=mm(b,t==='X'?'O':'X',me)+(t===me?-.01:.01);b[i]=null;best=t===me?Math.max(best,v):Math.min(best,v)}return best}
+function aiMove(b,d){const e=b.map((v,i)=>v?-1:i).filter(i=>i>=0),rnd=()=>e[Math.floor(Math.random()*e.length)];
+ const p={easy:0,medium:.5,hard:.85,impossible:1}[d];if(Math.random()>p)return rnd();
+ let bi=[],bv=-99;for(const i of e){b[i]='O';const v=mm(b,'X','O');b[i]=null;if(v>bv){bv=v;bi=[i]}else if(v===bv)bi.push(i)}return bi[Math.floor(Math.random()*bi.length)]}
+function startLocal(){G={board:Array(9).fill(null),turn:'X',starter:G?.starter||'X',over:false,sc:G?.sc||{X:0,O:0,d:0},
+ p:G?.p||{X:{name:nm(),av:AV[av1]},O:mode==='ai'?{name:'AI ('+$('#diff').value+')',av:'🤖'}:{name:($('#n2').value.trim()||'Player 2').slice(0,14),av:AV[av2]}}};
+ G.turn=G.starter;prevBoard=null;show('game');$('#rc').textContent='';$('#rs').hidden=false;renderLocal();if(mode==='ai'&&G.turn==='O')setTimeout(aiPlay,450)}
+$('#go').onclick=()=>{ls('name',nm());ls('av',av1);G=null;startLocal()};
+function renderLocal(){draw(G.board,G.over&&G.res&&G.res.line,playLocal,!G.over&&!(mode==='ai'&&G.turn==='O'));
+ sb(['X','O'].map(s=>({...G.p[s],s,w:G.sc[s],d:G.sc.d,act:!G.over&&G.turn===s})));$('#tn').textContent=G.over?'':`${G.p[G.turn].name}'s turn`}
+function playLocal(i){if(G.over||G.board[i])return;G.board[i]=G.turn;beep(G.turn==='X'?520:380);const r=res(G.board);
+ if(r){G.over=true;G.res=r;G.sc[r.w==='draw'?'d':r.w]++;renderLocal();endLocal(r)}else{G.turn=G.turn==='X'?'O':'X';renderLocal();if(mode==='ai'&&G.turn==='O')setTimeout(aiPlay,450)}}
+function aiPlay(){if(!G||G.over)return;playLocal(aiMove(G.board.slice(),$('#diff').value))}
+function endLocal(r){const win=r.w!=='draw',me=r.w==='X';
+ if(mode==='ai')rec(r.w==='draw'?'d':me?'w':'l');
+ if(win){beep(660,.3);if(mode==='local'||me)confetti()}else beep(220,.3);
+ const t=r.w==='draw'?"It's a Draw!":mode==='ai'?(me?'Victory! You Won!':'Defeat! Better Luck Next Time!'):`${G.p[r.w].name} Wins!`;
+ setTimeout(()=>modal(t,`${G.p.X.name} ${G.sc.X} – ${G.sc.d} – ${G.sc.O} ${G.p.O.name}`,[['Play Again',()=>{G.starter=G.starter==='X'?'O':'X';startLocal()}],['Exit',exitGame,1]]),700)}
+$('#rs').onclick=()=>{G.sc={X:0,O:0,d:0};startLocal()};
+function exitGame(){if(mode==='online'&&O&&O.status!=='waiting'&&!confirm('Leave the active match?'))return;if(mode==='online')sock&&sock.emit('leave');O=null;G=null;show('home')}
+$('#ex').onclick=exitGame;
+// ---- online
+function conn(){if(sock)return sock;sock=io({auth:{token:tok}});$('#conn').hidden=false;
+ sock.on('connect',()=>{$('#conn .dot').className='dot on';$('#connt').textContent='Online'});
+ sock.on('disconnect',()=>{$('#conn .dot').className='dot';$('#connt').textContent='Reconnecting…'});
+ sock.on('opponentLeft',()=>{O=null;toast('Your opponent left the room.');show('home')});
+ sock.on('state',s=>{O=s;mode='online';mySym=s.you;onState(s)});return sock}
+let mySym=null;
+function onState(s){
+ if(s.status==='waiting'){$('#wc').textContent=s.code;show('wait');return}
+ show('game');$('#rc').textContent='Room '+s.code;$('#rs').hidden=true;
+ const mine=mySym;draw(s.board,s.line,i=>{beep(520);sock.emit('move',i)},s.status==='playing'&&s.turn===mine);
+ sb(['X','O'].map(k=>({name:s[k].name+(s[k].online?'':' (away)'),av:AV[s[k].avatar],s:k,w:s.scores[k],d:s.scores.draw,act:s.status==='playing'&&s.turn===k})));
+ $('#tn').textContent=s.status==='over'?'':s.turn===mine?'Your turn':`Waiting for ${s[s.turn].name}…`;
+ if(s.status==='over'){const w=s.winner,t=w==='draw'?"It's a Draw!":w===mine?'Victory! You Won!':'Defeat! Better Luck Next Time!';
+  if(w!=='draw'&&w===mine)confetti();const key='g'+s.code+s.games;if(ls('last')!==key){ls('last',key);rec(w==='draw'?'d':w===mine?'w':'l');beep(w===mine?660:220,.3)}
+  const wait=s.votes.includes(mine);
+  modal(t,`${s.X.name} ${s.scores.X} – ${s.scores.draw} – ${s.scores.O} ${s.O.name} · ${s.games} games`,
+   [[wait?'Waiting for opponent…':'Play Again',()=>sock.emit('rematch')],['Leave Room',()=>{sock.emit('leave');O=null;show('home')},1]])}
+ else $('#modal').classList.remove('on')}
+$('#mk').onclick=()=>{ls('name',nm());ls('av',av1);conn().emit('create',{name:nm(),avatar:av1},r=>{if(r.err)$('#err').textContent=r.err})};
+$('#jn').onclick=()=>{$('#jbox').hidden=false;$('#jc').focus()};
+$('#jgo').onclick=()=>{ls('name',nm());ls('av',av1);conn().emit('join',{name:nm(),avatar:av1,code:$('#jc').value},r=>{if(r.err)$('#err').textContent=r.err;})};
+$('#cx').onclick=()=>{sock.emit('leave');O=null;show('home')};
+$('#cp').onclick=async()=>{try{await navigator.clipboard.writeText(O.code);toast('Code copied!')}catch{toast('Copy failed — select the code manually')}};
+$('#sh').onclick=async()=>{const t=`Join my TicTac Arena room with code ${O.code}`;if(navigator.share)try{await navigator.share({title:'TicTac Arena',text:t,url:location.origin})}catch{}else{await navigator.clipboard.writeText(t+' at '+location.origin);toast('Invite copied')}};
+// resume after refresh: server pushes state automatically if token is in a room
+conn();
+</script></body></html>
